@@ -1,61 +1,295 @@
-# Demo Devices Template
+# Modbus TCP
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Reads, and on request writes, the registers of Modbus TCP devices: energy
+meters, solar inverters, batteries, heat pumps, ventilation units, PLCs. Ready
+profiles cover the most common devices; for the others, you describe the
+registers in one line each, without editing any file.
 
-## What you get
+> **Developed without the hardware: feedback welcome.** The profiles follow the
+> manufacturers' published register tables and are tested against simulated
+> devices, not against real ones. If a value looks wrong on your device, open an
+> issue on [GitHub](https://github.com/guim31/gladys-modbus/issues) with the
+> output of the **Test a read** button.
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+## What it does
+
+- Up to four Modbus devices, each one a Gladys device with its features
+  (power, energy, voltage, temperature, state...), refreshed every 5 seconds to
+  5 minutes.
+- Ready profiles: Eastron SDM630 and SDM120 meters, SunSpec inverters and
+  meters (SMA, SolarEdge, Fronius, Kostal and many others), Huawei SUN2000
+  inverters (with their meter and battery), Victron GX systems.
+- Custom registers for everything else: holding and input registers, coils,
+  discrete inputs, 16 to 64-bit integers and floats in any word order, scale,
+  offset, unit, kind.
+- Energy indexes in kWh: Gladys adds its energy tracking (30-minute
+  consumption and cost) to them.
+- Writing, off by default, only for the registers you declare as a switch or a
+  bounded setpoint.
+- A **Test a read** button to find the type of an unknown register, a widget,
+  and two scene triggers (a device stops answering, answers again).
+
+## Requirements
+
+- Gladys Assistant 5.1 or later.
+- A device that speaks **Modbus TCP** on your network, or an RS-485 device
+  behind a **Modbus TCP gateway** (USR-TCP232, Waveshare RS485-to-ETH, Elfin
+  EW11/EE11...). The gateway works either as a Modbus TCP gateway ("Modbus
+  TCP to RTU" mode) or in transparent mode ("RTU over TCP" in this
+  integration).
+- Modbus TCP enabled on the device: on an SMA inverter (Sunny Portal or the
+  local interface, "Modbus" server), on a Victron GX (Settings > Services >
+  Modbus TCP), on a SolarEdge inverter (SetApp, Modbus TCP), on a Fronius
+  inverter (Communication > Modbus, "SunSpec" model type), on a Huawei
+  inverter (SDongle, Modbus TCP "Enable (unrestricted)").
+- A **fixed IP address** for the device or the gateway (DHCP reservation in
+  your router): Gladys identifies the device by its address, port and unit id.
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+### General settings
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+- **Language of the feature names**: Gladys keeps the names given when a
+  device is added.
+- **Read every**: 5 seconds to 5 minutes. Gladys accepts 300 values a minute
+  per integration: with many registers and a short interval, the integration
+  slows down by itself to stay below (one warning in the logs).
+- **Answer timeout**: 3 seconds by default; raise it for a slow RS-485 bus.
+- **Allow writing**: see [Writing registers](#writing-registers).
+
+### Devices
+
+Each of the four device blocks has:
+
+- **IP address or host name** of the device or of its gateway. Empty: the
+  block is not used.
+- **TCP port**: 502 almost always.
+- **Unit id**: 1 most of the time. SMA: 126 for SunSpec (3 for SMA's own
+  registers). Victron GX: 100 for the system values. Fronius Smart Meter: 240.
+  Eastron meters: the Modbus address set on the meter (001 by default).
+- **Profile**: a ready profile, or none.
+- **Framing**: Modbus TCP, or RTU over TCP for a gateway in transparent mode.
+- **Custom registers**: see below. They add to the profile's features.
+
+Several RS-485 devices behind one gateway: one block per device, with the same
+address and port and their own unit id. They share one connection, and their
+requests are sent one at a time, as the bus requires.
+
+### Profiles
+
+| Profile        | Device                                     | Usual unit id |
+| -------------- | ------------------------------------------ | ------------- |
+| Eastron SDM630 | three-phase meter (through a gateway)      | 1             |
+| Eastron SDM120 | single-phase meter (through a gateway)     | 1             |
+| SunSpec        | inverters and meters that follow SunSpec   | 1, 126 (SMA)  |
+| Huawei SUN2000 | Huawei inverter, its meter and its battery | 1             |
+| Victron GX     | Cerbo GX, Venus GX, Ekrano: system values  | 100           |
+
+The SunSpec profile reads the list of SunSpec models the device announces
+(at register 40000, or 0, or 50000) and publishes the inverters and meters it
+finds. The Huawei profile looks once for a power meter and a battery. What a
+device has is kept in `/data`, so a device asleep at restart (an inverter at
+night) is still published.
+
+### Custom registers
+
+One entry per register, entries separated by semicolons (the configuration
+field is a single line):
+
+```
+Flow temperature: holding 100 int16 scale=0.1 temperature; Pump: coil 5 switch
+```
+
+An entry is `name: table address`, then, in any order, a data type, a kind and
+options.
+
+- **name**: the name of the feature in Gladys (40 characters at most).
+- **table**: `holding` (holding register, function 3), `input` (input register,
+  function 4), `coil` (function 1), `discrete` (discrete input, function 2).
+- **address**: the register address as sent on the wire, from 0 to 65535, in
+  decimal or in hexadecimal (`0x0034`). Some documents count from 1, or add
+  30001 or 40001: subtract it.
+- **data type** (registers only): `int16` (default), `uint16`, `int32`,
+  `uint32`, `float32`, `int64`, `uint64`, `float64`, or `bit0` to `bit15` for
+  one bit of a register.
+- **kind**: what the value is.
+
+| Kind          | Gladys feature                  | Units (first = default)         |
+| ------------- | ------------------------------- | ------------------------------- |
+| `temperature` | temperature                     | °C, °F, K                       |
+| `humidity`    | humidity                        | %                               |
+| `pressure`    | pressure                        | bar, mbar, hPa, kPa, Pa, psi    |
+| `power`       | power (energy sensor)           | W, kW                           |
+| `energy`      | energy index, energy tracking   | kWh, Wh, MWh (published in kWh) |
+| `production`  | production index                | kWh, Wh, MWh (published in kWh) |
+| `solar_power` | production power                | W, kW                           |
+| `grid_power`  | grid power (import +, export −) | W, kW                           |
+| `voltage`     | voltage                         | V, mV                           |
+| `current`     | current                         | A, mA                           |
+| `battery`     | battery level                   | %                               |
+| `volume`      | volume                          | L, mL, m3                       |
+| `duration`    | duration                        | s, ms, min, h, d                |
+| `value`       | a number shown as is (default)  | any of the above, or none       |
+| `binary`      | on/off, read-only               |                                 |
+| `switch`      | on/off, writable                |                                 |
+| `setpoint`    | bounded temperature setpoint    | °C, °F                          |
+
+- **options**:
+  - `scale=0.1` multiplies the raw value, `offset=-40` adds to it (after the
+    scale). A decimal comma works too (`scale=0,1`).
+  - `unit=kW` picks another unit of the kind.
+  - `swap=word` (registers in reverse order, "CDAB"), `swap=byte` ("BADC"),
+    `swap=word_byte` ("DCBA"). Without it: most significant register first
+    ("ABCD"). The names are the ones of Home Assistant's `modbus` integration.
+  - `min=` and `max=`: the display bounds; for a setpoint, the bounds outside
+    which nothing is written (mandatory).
+  - `precision=2`: decimals kept (from the scale by default, 2 for floats).
+  - `on=` and `off=`: the values a register switch writes (1 and 0 by
+    default).
+
+Every mistake is listed under the configuration status (red "Disconnected"
+badge) and in red by the **Check the configuration** button, with the device,
+the entry number, its name and the word at fault, for example
+`Device 1, entry 2 "Pump": a coil is one bit: it takes no data type.` The
+other entries keep working.
+
+## Devices and features
+
+Every device is polled by the integration itself, at the chosen interval; only
+the values that changed are sent to Gladys, plus every value once every 6
+hours.
+
+### Eastron SDM630 and SDM120
+
+Total power, energy imported (energy index, with energy tracking), energy
+exported, and per phase (SDM630) or for the line (SDM120) voltage, current
+and power. The meters count the power positive when importing.
+
+### SunSpec
+
+Per inverter model (101-103, 111-113): AC power, total yield (index in kWh),
+DC power, AC current, AC voltage (phase A), internal (cabinet) temperature,
+operating state (off, sleeping, starting, producing, limited, shutting down,
+fault, standby). Per meter model (201-204, 211-214): meter power (with the
+manufacturer's sign), current, voltage, energy imported and exported. The
+device is named after its manufacturer and model, its serial number is in the
+device parameters. A value the device does not implement is not published.
+
+### Huawei SUN2000
+
+AC power, total yield, DC input power, AC voltage and current (phase A),
+internal temperature, operating state. With a power meter: grid power
+(positive when importing, as Gladys counts it), grid import and grid export
+indexes. With a LUNA2000 battery: battery level, charge power and discharge
+power.
+
+### Victron GX
+
+Grid power (sum of the phases, positive when importing), house consumption,
+solar power (PV on the AC side and DC side). With a battery: battery level,
+charge and discharge power, battery voltage.
+
+### Custom registers
+
+One feature per entry, of the category its kind gives.
+
+## Writing registers
+
+Writing is **off by default**. Only the entries you declare as `switch` or
+`setpoint` are controls in Gladys, nothing else; while **Allow writing** is
+off, they refuse every change (the configuration status says so). Turn it on
+in the configuration when you are sure of the registers.
+
+- `switch`: on a coil, writes 1 or 0; on a holding register, writes the `on`
+  or `off` value (`Heating: holding 111 switch on=1 off=0`). It is shown as an
+  on/off toggle, outside the voice assistants.
+- `setpoint`: a temperature written to a holding register
+  (`DHW setpoint: holding 110 uint16 setpoint min=40 max=55`). `min` and
+  `max` are mandatory: a value outside them is refused and nothing is
+  written. The scale is applied backwards (with `scale=0.1`, 42.5 °C writes
+  425).
+
+**Writing the wrong register can damage an installation** (a heat pump, an
+inverter, a boiler): check every address, data type and value in the
+manufacturer's documentation, start with a value you can undo, and keep
+writing off when you do not need it. Each write is logged with its register
+and value. One bit of a register cannot be written (that would rewrite the 15
+others), nor a 64-bit value.
 
 ## Actions
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+- **Test a read**: pick a saved device, type a register in the custom
+  registers syntax without the name (`holding 100 int16 scale=0.1`), and the
+  raw words are shown in hexadecimal and decimal, with the converted value and
+  what the same registers read as in every data type and word order. Add
+  `count=10` to read ten registers from that address. Type `sunspec` to list
+  the SunSpec models of the device. Works even when the device has no
+  register declared yet.
+- **Check the configuration**: the mistakes entry by entry (in red), then each
+  device with its profile, its number of features, and whether it answers.
 
-## Scenes
+## Dashboard widget
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+**Modbus device**: choose a device; the widget shows its main values as live
+tiles (power and yield of an inverter, power and indexes of a meter, grid,
+house, solar and battery of a Victron system) and the state of its link:
+answering or not, time of the last read, operating state of an inverter, last
+error.
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+## Scene triggers
 
-## Dashboard
+- **A Modbus device stops answering**: two reads in a row failed. Variables:
+  the device name and the error. Filter: one device, or any.
+- **A Modbus device answers again**: a device that had stopped answering is
+  read again.
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+## Scene examples
+
+- Notify me when the heat pump gateway stops answering for more than two read
+  cycles: trigger **A Modbus device stops answering** on the heat pump, action
+  "Send a message" with `{{triggerEvent.data.error}}`.
+- Start the dishwasher plug when the solar power exceeds 2000 W: trigger "a
+  device value changes" on **Solar power** (Victron) or **AC power**
+  (inverter), condition above 2000, action "turn on".
+- Lower the hot water setpoint at night: scheduled trigger at 22:00, action
+  "set the value" of **DHW setpoint** to 45 (writing allowed, setpoint
+  declared with its bounds).
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"Cannot connect ... ECONNREFUSED"**: nothing listens on that address and
+  port, or Modbus TCP is not enabled on the device. **"No answer ... within
+  3000 ms"**: wrong address, a device asleep (inverters at night), a gateway
+  whose serial settings (baud rate, parity) do not match the device, or the
+  wrong framing.
+- **"Modbus exception 11"**: the gateway answers, but not the device behind
+  it: check the unit id and the RS-485 wiring (A/B).
+- **"refuses every register" / exception 2**: the profile or the addresses do
+  not match the device. Use **Test a read** with `count=` around the address,
+  and check whether the document counts from 1 or adds 30001/40001.
+- **A value 10 or 100 times too big**: add `scale=0.1` or `scale=0.01`.
+  **A huge or absurd value**: try another data type or `swap=word` with **Test
+  a read**, which shows all the readings at once.
+- **A Huawei inverter that does not answer**: it accepts one Modbus TCP client
+  at a time (close the other ones), and needs Modbus TCP set to "Enable
+  (unrestricted)" on the SDongle.
+- **Logs**: set `LOG_LEVEL=debug` on the integration to see every read.
+
+## Limits
+
+- Four devices at most, 40 custom registers per device.
+- Modbus TCP and RTU over TCP only: no serial port (the container has none),
+  no Modbus UDP, no ASCII.
+- No automatic discovery: Modbus has none, the addresses are typed.
+- The SunSpec profile reads the inverter and meter models only (no battery
+  model 802, no MPPT model 160).
+- Writing: switches and temperature setpoints only; no bit of a register, no
+  64-bit value, no other numeric setpoint (Gladys has no neutral numeric
+  control).
+- Feature names are frozen when a device is added (Gladys rule).
+- Developed without the hardware: the profiles are tested against simulated
+  devices built from the manufacturers' tables.
+
+Eastron, SMA, SolarEdge, Fronius, Kostal, Huawei, Victron Energy and SunSpec
+are trademarks of their owners. This integration is not affiliated with, nor
+endorsed by, any of them.

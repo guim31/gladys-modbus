@@ -12,44 +12,25 @@ the notes of the version's GitHub Release.
 
 ### Added
 
-- A working example of scene triggers, scene actions and dashboard widgets
-  (Gladys 5.1.0 or later).
-- `CHANGELOG.md`, rolled by the Release workflow.
-- A GitHub Release for every version, with its changelog section as notes: the
-  Gladys Supervision page links each version to the repository's releases.
-- CI runs the tests on Node 22 and 24, and builds the Docker image.
-- Dependabot keeps the npm dependencies and the GitHub Actions up to date.
-- `SECURITY.md` (how to report a vulnerability) and `CLAUDE.md` (project rules
-  for contributors and coding assistants).
-- Manifest tests: `version` matches `package.json`, `docker_image` is tagged
-  with it, descriptions hold 10 to 100 characters, placeholders are
-  multi-language objects.
-- The latitude and longitude fields show an example value as placeholder.
+- Up to four Modbus TCP devices, each one a Gladys device, directly or behind a
+  Modbus TCP gateway; RS-485 gateways in transparent mode ("RTU over TCP") too.
+  Several devices behind one gateway share its connection.
+- Ready profiles: Eastron SDM630 and SDM120 meters, SunSpec inverters and
+  meters (models detected: SMA, SolarEdge, Fronius, Kostal...), Huawei SUN2000
+  inverters with their meter and battery, Victron GX systems.
+- Custom registers in a one-line syntax: holding and input registers, coils,
+  discrete inputs, 16 to 64-bit integers and floats, one bit of a register,
+  word and byte orders, scale, offset, unit and kind. Mistakes are reported
+  entry by entry, with the word at fault.
+- Energy indexes in kWh, with the energy tracking of Gladys.
+- Writing, off by default, for the registers declared as a switch or a bounded
+  temperature setpoint only.
+- Grouped reads, a reading pace from 5 seconds to 5 minutes (slowed down to
+  stay within what Gladys accepts), reconnection with back-off, calm logs.
+- **Test a read** and **Check the configuration** buttons in the
+  Configuration screen.
+- The **Modbus device** dashboard widget, and the scene triggers _A Modbus
+  device stops answering_ and _A Modbus device answers again_.
+- English, French, German and Spanish everywhere, documentation included.
 
-### Changed
-
-- Node.js 22 or later is required (Node 20 is end-of-life).
-- Integration SDK 0.15.0. The tests now run against the fake Gladys of the
-  SDK, which refuses the payloads Gladys refuses.
-- The refresh interval is one minute minimum, the fastest Gladys polls a
-  device. The plug's power is only sent when it changes, and every 30
-  minutes otherwise.
-
-### Fixed
-
-- Gladys refused the devices of the Discovery tab: the weather station and
-  the plug declared their poll frequency in seconds instead of one of the
-  values Gladys accepts, and were never polled. They now poll every minute,
-  and the readings follow the refresh interval of the configuration.
-
-- The release commit no longer fails `npm run format:check`: the Release
-  workflow updates the manifest `version` and `docker_image` in place instead
-  of re-printing the whole file with `jq`.
-- The integration can write to `/data`: the image creates the directory owned
-  by the `node` user, a new Docker volume was owned by root.
-- A sub-container running the integration's own image follows it to the new
-  tag at each release, as well as in the manifest of the build summary: it kept
-  the previous tag, which may not exist on the registry. Sub-containers on a
-  third-party image (a broker, a database...) keep theirs.
-
-[Unreleased]: https://github.com/GladysAssistant/integration-template-js/commits/main
+[Unreleased]: https://github.com/guim31/gladys-modbus/commits/main

@@ -1,177 +1,1197 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Modbus TCP",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Read and write Modbus TCP registers: energy meters, inverters, heat pumps, PLCs.",
+    "fr": "Lire et écrire des registres Modbus TCP : compteurs, onduleurs, pompes à chaleur, automates.",
+    "de": "Modbus-TCP-Register lesen und schreiben: Zähler, Wechselrichter, Wärmepumpen, SPS.",
+    "es": "Leer y escribir registros Modbus TCP: contadores, inversores, bombas de calor, PLC."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-modbus:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-modbus/main/cover.png",
+  "categories": ["protocols", "energy"],
+  "transports": ["local"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Getting started",
+        "fr": "Pour commencer",
+        "de": "Erste Schritte",
+        "es": "Para empezar"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Describe up to four Modbus devices below: the address of the device or of its Modbus TCP gateway, its unit id, then a ready-made profile or your own registers. Save, then add the devices from the Discovery tab. The \"Test a read\" button reads one register to find its type before declaring it.",
+        "fr": "Décrivez jusqu'à quatre appareils Modbus ci-dessous : l'adresse de l'appareil ou de sa passerelle Modbus TCP, son identifiant d'esclave, puis un profil prêt à l'emploi ou vos propres registres. Enregistrez, puis ajoutez les appareils depuis l'onglet Découverte. Le bouton « Tester la lecture » lit un registre pour trouver son type avant de le déclarer.",
+        "de": "Beschreibe unten bis zu vier Modbus-Geräte: die Adresse des Geräts oder seines Modbus-TCP-Gateways, seine Unit-ID, dann ein fertiges Profil oder deine eigenen Register. Speichere und füge die Geräte im Tab „Entdecken“ hinzu. Die Schaltfläche „Lesen testen“ liest ein Register, um seinen Typ zu finden, bevor du es deklarierst.",
+        "es": "Describa hasta cuatro dispositivos Modbus a continuación: la dirección del dispositivo o de su pasarela Modbus TCP, su identificador de esclavo y luego un perfil listo para usar o sus propios registros. Guarde y añada los dispositivos desde la pestaña Descubrimiento. El botón «Probar una lectura» lee un registro para encontrar su tipo antes de declararlo."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/guim31/gladys-modbus/blob/main/docs/en.md#custom-registers",
+          "label": {
+            "en": "Custom registers syntax",
+            "fr": "Syntaxe des registres",
+            "de": "Syntax der Register",
+            "es": "Sintaxis de los registros"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
+      "key": "language",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Language of the feature names",
+        "fr": "Langue des noms de fonctionnalités",
+        "de": "Sprache der Funktionsnamen",
+        "es": "Idioma de los nombres de funciones"
+      },
+      "description": {
+        "en": "Gladys keeps the names given when a device is added.",
+        "fr": "Gladys garde les noms donnés à l'ajout d'un appareil.",
+        "de": "Gladys behält die Namen, die beim Hinzufügen eines Geräts vergeben werden.",
+        "es": "Gladys conserva los nombres dados al añadir un dispositivo."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "fr",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "poll_interval",
+      "type": "select",
+      "label": {
+        "en": "Read every",
+        "fr": "Lire toutes les",
+        "de": "Lesen alle",
+        "es": "Leer cada"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Gladys accepts 300 values a minute: with many registers, the reads slow down to stay below.",
+        "fr": "Gladys accepte 300 valeurs par minute : avec beaucoup de registres, les lectures ralentissent pour rester en dessous.",
+        "de": "Gladys nimmt 300 Werte pro Minute an: Bei vielen Registern wird langsamer gelesen, um darunter zu bleiben.",
+        "es": "Gladys acepta 300 valores por minuto: con muchos registros, las lecturas se ralentizan para quedar por debajo."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "30",
+      "options": [
+        {
+          "value": "5",
+          "label": {
+            "en": "5 seconds",
+            "fr": "5 secondes",
+            "de": "5 Sekunden",
+            "es": "5 segundos"
+          }
+        },
+        {
+          "value": "10",
+          "label": {
+            "en": "10 seconds",
+            "fr": "10 secondes",
+            "de": "10 Sekunden",
+            "es": "10 segundos"
+          }
+        },
+        {
+          "value": "15",
+          "label": {
+            "en": "15 seconds",
+            "fr": "15 secondes",
+            "de": "15 Sekunden",
+            "es": "15 segundos"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "30 seconds",
+            "fr": "30 secondes",
+            "de": "30 Sekunden",
+            "es": "30 segundos"
+          }
+        },
+        {
+          "value": "60",
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
+        },
+        {
+          "value": "120",
+          "label": {
+            "en": "2 minutes",
+            "fr": "2 minutes",
+            "de": "2 Minuten",
+            "es": "2 minutos"
+          }
+        },
+        {
+          "value": "300",
+          "label": {
+            "en": "5 minutes",
+            "fr": "5 minutes",
+            "de": "5 Minuten",
+            "es": "5 minutos"
+          }
+        }
+      ]
+    },
+    {
+      "key": "timeout",
+      "type": "number",
+      "label": {
+        "en": "Answer timeout (s)",
+        "fr": "Délai de réponse (s)",
+        "de": "Antwortzeit (s)",
+        "es": "Tiempo de respuesta (s)"
+      },
+      "description": {
+        "en": "Raise it for a slow RS-485 bus (9600 baud and below).",
+        "fr": "À augmenter pour un bus RS-485 lent (9600 bauds et moins).",
+        "de": "Für einen langsamen RS-485-Bus (9600 Baud und weniger) erhöhen.",
+        "es": "Auméntelo para un bus RS-485 lento (9600 baudios o menos)."
+      },
+      "required": false,
+      "default": 3,
+      "min": 1,
+      "max": 30
+    },
+    {
+      "key": "allow_write",
+      "type": "boolean",
+      "label": {
+        "en": "Allow writing",
+        "fr": "Autoriser l'écriture",
+        "de": "Schreiben erlauben",
+        "es": "Permitir la escritura"
+      },
+      "description": {
+        "en": "Off by default. When on, only the registers you declared as switch or setpoint can be changed from Gladys. Writing a wrong register can damage an installation: check each address in the manufacturer's documentation.",
+        "fr": "Désactivée par défaut. Activée, seuls les registres déclarés en switch ou setpoint peuvent être modifiés depuis Gladys. Écrire un mauvais registre peut abîmer une installation : vérifiez chaque adresse dans la documentation du fabricant.",
+        "de": "Standardmäßig aus. Eingeschaltet lassen sich nur die als switch oder setpoint deklarierten Register aus Gladys ändern. Ein falsch geschriebenes Register kann eine Anlage beschädigen: Prüfe jede Adresse in der Dokumentation des Herstellers.",
+        "es": "Desactivada por defecto. Activada, solo los registros declarados como switch o setpoint se pueden cambiar desde Gladys. Escribir un registro equivocado puede dañar una instalación: compruebe cada dirección en la documentación del fabricante."
+      },
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "device_1",
+      "type": "section",
+      "label": {
+        "en": "Device 1",
+        "fr": "Appareil 1",
+        "de": "Gerät 1",
+        "es": "Dispositivo 1"
+      },
+      "description": {
+        "en": "A device and its Modbus TCP gateway, if any. Several devices behind one RS-485 gateway share its address and port, with different unit ids. Give the device (or the gateway) a fixed IP address: Gladys identifies the device by it.",
+        "fr": "Un appareil et sa passerelle Modbus TCP s'il en a une. Plusieurs appareils derrière une même passerelle RS-485 partagent son adresse et son port, avec des identifiants d'esclave différents. Donnez une adresse IP fixe à l'appareil (ou à la passerelle) : Gladys l'identifie par elle.",
+        "de": "Ein Gerät und gegebenenfalls sein Modbus-TCP-Gateway. Mehrere Geräte hinter einem RS-485-Gateway teilen seine Adresse und seinen Port, mit verschiedenen Unit-IDs. Gib dem Gerät (oder dem Gateway) eine feste IP-Adresse: Gladys erkennt das Gerät daran.",
+        "es": "Un dispositivo y su pasarela Modbus TCP si la tiene. Varios dispositivos detrás de una misma pasarela RS-485 comparten su dirección y su puerto, con identificadores de esclavo distintos. Dé una dirección IP fija al dispositivo (o a la pasarela): Gladys lo identifica por ella."
+      }
+    },
+    {
+      "key": "device_1_host",
+      "type": "string",
+      "label": {
+        "en": "IP address or host name",
+        "fr": "Adresse IP ou nom d'hôte",
+        "de": "IP-Adresse oder Hostname",
+        "es": "Dirección IP o nombre de host"
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.50",
+        "fr": "ex. 192.168.1.50",
+        "de": "z. B. 192.168.1.50",
+        "es": "p. ej. 192.168.1.50"
+      },
+      "required": false
+    },
+    {
+      "key": "device_1_port",
+      "type": "number",
+      "label": {
+        "en": "TCP port",
+        "fr": "Port TCP",
+        "de": "TCP-Port",
+        "es": "Puerto TCP"
+      },
+      "description": {
+        "en": "502 for Modbus TCP. Huawei: 502 through the SDongle, 6607 on some inverters.",
+        "fr": "502 pour Modbus TCP. Huawei : 502 via le SDongle, 6607 sur certains onduleurs.",
+        "de": "502 für Modbus TCP. Huawei: 502 über den SDongle, 6607 bei manchen Wechselrichtern.",
+        "es": "502 para Modbus TCP. Huawei: 502 a través del SDongle, 6607 en algunos inversores."
+      },
+      "required": false,
+      "default": 502,
+      "min": 1,
+      "max": 65535
+    },
+    {
+      "key": "device_1_unit_id",
+      "type": "number",
+      "label": {
+        "en": "Unit id (slave)",
+        "fr": "Identifiant d'esclave (unit id)",
+        "de": "Unit-ID (Slave)",
+        "es": "Identificador de esclavo (unit id)"
+      },
+      "description": {
+        "en": "Usually 1. SMA: 126 (SunSpec) or 3. Victron GX: 100. Fronius meter: 240. Eastron meters: the address set on the meter.",
+        "fr": "Souvent 1. SMA : 126 (SunSpec) ou 3. Victron GX : 100. Compteur Fronius : 240. Compteurs Eastron : l'adresse réglée sur le compteur.",
+        "de": "Meist 1. SMA: 126 (SunSpec) oder 3. Victron GX: 100. Fronius-Zähler: 240. Eastron-Zähler: die am Zähler eingestellte Adresse.",
+        "es": "Normalmente 1. SMA: 126 (SunSpec) o 3. Victron GX: 100. Contador Fronius: 240. Contadores Eastron: la dirección configurada en el contador."
+      },
+      "required": false,
+      "default": 1,
+      "min": 0,
+      "max": 255
+    },
+    {
+      "key": "device_1_profile",
+      "type": "select",
+      "label": {
+        "en": "Profile",
+        "fr": "Profil",
+        "de": "Profil",
+        "es": "Perfil"
+      },
+      "description": {
+        "en": "A profile knows the registers of the device. SunSpec covers many inverters and meters (SMA, SolarEdge, Fronius, Kostal...): its models are detected.",
+        "fr": "Un profil connaît les registres de l'appareil. SunSpec couvre beaucoup d'onduleurs et de compteurs (SMA, SolarEdge, Fronius, Kostal...) : ses modèles sont détectés.",
+        "de": "Ein Profil kennt die Register des Geräts. SunSpec deckt viele Wechselrichter und Zähler ab (SMA, SolarEdge, Fronius, Kostal...): Die Modelle werden erkannt.",
+        "es": "Un perfil conoce los registros del dispositivo. SunSpec cubre muchos inversores y contadores (SMA, SolarEdge, Fronius, Kostal...): sus modelos se detectan."
+      },
+      "required": false,
+      "default": "custom",
+      "options": [
+        {
+          "value": "custom",
+          "label": {
+            "en": "None: custom registers only",
+            "fr": "Aucun : registres personnalisés seulement",
+            "de": "Keins: nur eigene Register",
+            "es": "Ninguno: solo registros propios"
+          }
+        },
+        {
+          "value": "eastron_sdm630",
+          "label": {
+            "en": "Eastron SDM630 (three-phase meter)",
+            "fr": "Eastron SDM630 (compteur triphasé)",
+            "de": "Eastron SDM630 (Drehstromzähler)",
+            "es": "Eastron SDM630 (contador trifásico)"
+          }
+        },
+        {
+          "value": "eastron_sdm120",
+          "label": {
+            "en": "Eastron SDM120 (single-phase meter)",
+            "fr": "Eastron SDM120 (compteur monophasé)",
+            "de": "Eastron SDM120 (Wechselstromzähler)",
+            "es": "Eastron SDM120 (contador monofásico)"
+          }
+        },
+        {
+          "value": "sunspec",
+          "label": {
+            "en": "SunSpec inverter or meter",
+            "fr": "Onduleur ou compteur SunSpec",
+            "de": "SunSpec-Wechselrichter oder -Zähler",
+            "es": "Inversor o contador SunSpec"
+          }
+        },
+        {
+          "value": "huawei_sun2000",
+          "label": {
+            "en": "Huawei SUN2000 inverter",
+            "fr": "Onduleur Huawei SUN2000",
+            "de": "Huawei-SUN2000-Wechselrichter",
+            "es": "Inversor Huawei SUN2000"
+          }
+        },
+        {
+          "value": "victron_gx",
+          "label": {
+            "en": "Victron GX (system, unit id 100)",
+            "fr": "Victron GX (système, esclave 100)",
+            "de": "Victron GX (System, Unit-ID 100)",
+            "es": "Victron GX (sistema, esclavo 100)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_1_framing",
+      "type": "select",
+      "label": {
+        "en": "Framing",
+        "fr": "Trame",
+        "de": "Framing",
+        "es": "Trama"
+      },
+      "description": {
+        "en": "RTU over TCP for an RS-485 gateway in transparent mode (USR, Waveshare, Elfin set to \"none\" / \"transparent\").",
+        "fr": "RTU sur TCP pour une passerelle RS-485 en mode transparent (USR, Waveshare, Elfin réglées sur « none » / « transparent »).",
+        "de": "RTU über TCP für ein RS-485-Gateway im transparenten Modus (USR, Waveshare, Elfin auf „none“ / „transparent“).",
+        "es": "RTU sobre TCP para una pasarela RS-485 en modo transparente (USR, Waveshare, Elfin en «none» / «transparent»)."
+      },
+      "required": false,
+      "default": "tcp",
+      "options": [
+        {
+          "value": "tcp",
+          "label": {
+            "en": "Modbus TCP",
+            "fr": "Modbus TCP",
+            "de": "Modbus TCP",
+            "es": "Modbus TCP"
+          }
+        },
+        {
+          "value": "rtu_over_tcp",
+          "label": {
+            "en": "RTU over TCP (transparent gateway)",
+            "fr": "RTU sur TCP (passerelle transparente)",
+            "de": "RTU über TCP (transparentes Gateway)",
+            "es": "RTU sobre TCP (pasarela transparente)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_1_registers",
+      "type": "string",
+      "label": {
+        "en": "Custom registers",
+        "fr": "Registres personnalisés",
+        "de": "Eigene Register",
+        "es": "Registros propios"
+      },
+      "description": {
+        "en": "Entries separated by semicolons: name: table address, then type, kind and options. Tables: holding, input, coil, discrete. Types: int16 (default), uint16, int32, uint32, float32, int64, uint64, float64, bit0-bit15. Kinds: temperature, humidity, pressure, power, energy, production, solar_power, grid_power, voltage, current, battery, volume, duration, value (default), binary, switch, setpoint. Options: scale=0.1 offset= unit= swap=word min= max= precision= on= off=.",
+        "fr": "Entrées séparées par des points-virgules : nom: table adresse, puis type, nature et options. Tables : holding, input, coil, discrete. Types : int16 (par défaut), uint16, int32, uint32, float32, int64, uint64, float64, bit0-bit15. Natures : temperature, humidity, pressure, power, energy, production, solar_power, grid_power, voltage, current, battery, volume, duration, value (par défaut), binary, switch, setpoint. Options : scale=0.1 offset= unit= swap=word min= max= precision= on= off=.",
+        "de": "Einträge durch Semikolons getrennt: Name: Tabelle Adresse, dann Typ, Art und Optionen. Tabellen: holding, input, coil, discrete. Typen: int16 (Standard), uint16, int32, uint32, float32, int64, uint64, float64, bit0-bit15. Arten: temperature, humidity, pressure, power, energy, production, solar_power, grid_power, voltage, current, battery, volume, duration, value (Standard), binary, switch, setpoint. Optionen: scale=0.1 offset= unit= swap=word min= max= precision= on= off=.",
+        "es": "Entradas separadas por punto y coma: nombre: tabla dirección, luego tipo, naturaleza y opciones. Tablas: holding, input, coil, discrete. Tipos: int16 (por defecto), uint16, int32, uint32, float32, int64, uint64, float64, bit0-bit15. Naturalezas: temperature, humidity, pressure, power, energy, production, solar_power, grid_power, voltage, current, battery, volume, duration, value (por defecto), binary, switch, setpoint. Opciones: scale=0.1 offset= unit= swap=word min= max= precision= on= off=."
+      },
+      "placeholder": {
+        "en": "Flow: holding 100 scale=0.1 temperature; Pump: coil 5 switch",
+        "fr": "Départ: holding 100 scale=0.1 temperature; Pompe: coil 5 switch",
+        "de": "Vorlauf: holding 100 scale=0.1 temperature; Pumpe: coil 5 switch",
+        "es": "Ida: holding 100 scale=0.1 temperature; Bomba: coil 5 switch"
+      },
+      "required": false
+    },
+    {
+      "key": "device_2",
+      "type": "section",
+      "label": {
+        "en": "Device 2",
+        "fr": "Appareil 2",
+        "de": "Gerät 2",
+        "es": "Dispositivo 2"
+      },
+      "description": {
+        "en": "Leave the address empty if you do not use this device.",
+        "fr": "Laissez l'adresse vide si vous n'utilisez pas cet appareil.",
+        "de": "Lass die Adresse leer, wenn du dieses Gerät nicht nutzt.",
+        "es": "Deje la dirección vacía si no usa este dispositivo."
+      }
+    },
+    {
+      "key": "device_2_host",
+      "type": "string",
+      "label": {
+        "en": "IP address or host name",
+        "fr": "Adresse IP ou nom d'hôte",
+        "de": "IP-Adresse oder Hostname",
+        "es": "Dirección IP o nombre de host"
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.50",
+        "fr": "ex. 192.168.1.50",
+        "de": "z. B. 192.168.1.50",
+        "es": "p. ej. 192.168.1.50"
+      },
+      "required": false
+    },
+    {
+      "key": "device_2_port",
+      "type": "number",
+      "label": {
+        "en": "TCP port",
+        "fr": "Port TCP",
+        "de": "TCP-Port",
+        "es": "Puerto TCP"
+      },
+      "required": false,
+      "default": 502,
+      "min": 1,
+      "max": 65535
+    },
+    {
+      "key": "device_2_unit_id",
+      "type": "number",
+      "label": {
+        "en": "Unit id (slave)",
+        "fr": "Identifiant d'esclave (unit id)",
+        "de": "Unit-ID (Slave)",
+        "es": "Identificador de esclavo (unit id)"
+      },
+      "required": false,
+      "default": 1,
+      "min": 0,
+      "max": 255
+    },
+    {
+      "key": "device_2_profile",
+      "type": "select",
+      "label": {
+        "en": "Profile",
+        "fr": "Profil",
+        "de": "Profil",
+        "es": "Perfil"
+      },
+      "required": false,
+      "default": "custom",
+      "options": [
+        {
+          "value": "custom",
+          "label": {
+            "en": "None: custom registers only",
+            "fr": "Aucun : registres personnalisés seulement",
+            "de": "Keins: nur eigene Register",
+            "es": "Ninguno: solo registros propios"
+          }
+        },
+        {
+          "value": "eastron_sdm630",
+          "label": {
+            "en": "Eastron SDM630 (three-phase meter)",
+            "fr": "Eastron SDM630 (compteur triphasé)",
+            "de": "Eastron SDM630 (Drehstromzähler)",
+            "es": "Eastron SDM630 (contador trifásico)"
+          }
+        },
+        {
+          "value": "eastron_sdm120",
+          "label": {
+            "en": "Eastron SDM120 (single-phase meter)",
+            "fr": "Eastron SDM120 (compteur monophasé)",
+            "de": "Eastron SDM120 (Wechselstromzähler)",
+            "es": "Eastron SDM120 (contador monofásico)"
+          }
+        },
+        {
+          "value": "sunspec",
+          "label": {
+            "en": "SunSpec inverter or meter",
+            "fr": "Onduleur ou compteur SunSpec",
+            "de": "SunSpec-Wechselrichter oder -Zähler",
+            "es": "Inversor o contador SunSpec"
+          }
+        },
+        {
+          "value": "huawei_sun2000",
+          "label": {
+            "en": "Huawei SUN2000 inverter",
+            "fr": "Onduleur Huawei SUN2000",
+            "de": "Huawei-SUN2000-Wechselrichter",
+            "es": "Inversor Huawei SUN2000"
+          }
+        },
+        {
+          "value": "victron_gx",
+          "label": {
+            "en": "Victron GX (system, unit id 100)",
+            "fr": "Victron GX (système, esclave 100)",
+            "de": "Victron GX (System, Unit-ID 100)",
+            "es": "Victron GX (sistema, esclavo 100)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_2_framing",
+      "type": "select",
+      "label": {
+        "en": "Framing",
+        "fr": "Trame",
+        "de": "Framing",
+        "es": "Trama"
+      },
+      "required": false,
+      "default": "tcp",
+      "options": [
+        {
+          "value": "tcp",
+          "label": {
+            "en": "Modbus TCP",
+            "fr": "Modbus TCP",
+            "de": "Modbus TCP",
+            "es": "Modbus TCP"
+          }
+        },
+        {
+          "value": "rtu_over_tcp",
+          "label": {
+            "en": "RTU over TCP (transparent gateway)",
+            "fr": "RTU sur TCP (passerelle transparente)",
+            "de": "RTU über TCP (transparentes Gateway)",
+            "es": "RTU sobre TCP (pasarela transparente)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_2_registers",
+      "type": "string",
+      "label": {
+        "en": "Custom registers",
+        "fr": "Registres personnalisés",
+        "de": "Eigene Register",
+        "es": "Registros propios"
+      },
+      "placeholder": {
+        "en": "Flow: holding 100 scale=0.1 temperature; Pump: coil 5 switch",
+        "fr": "Départ: holding 100 scale=0.1 temperature; Pompe: coil 5 switch",
+        "de": "Vorlauf: holding 100 scale=0.1 temperature; Pumpe: coil 5 switch",
+        "es": "Ida: holding 100 scale=0.1 temperature; Bomba: coil 5 switch"
+      },
+      "required": false
+    },
+    {
+      "key": "device_3",
+      "type": "section",
+      "label": {
+        "en": "Device 3",
+        "fr": "Appareil 3",
+        "de": "Gerät 3",
+        "es": "Dispositivo 3"
+      },
+      "description": {
+        "en": "Leave the address empty if you do not use this device.",
+        "fr": "Laissez l'adresse vide si vous n'utilisez pas cet appareil.",
+        "de": "Lass die Adresse leer, wenn du dieses Gerät nicht nutzt.",
+        "es": "Deje la dirección vacía si no usa este dispositivo."
+      }
+    },
+    {
+      "key": "device_3_host",
+      "type": "string",
+      "label": {
+        "en": "IP address or host name",
+        "fr": "Adresse IP ou nom d'hôte",
+        "de": "IP-Adresse oder Hostname",
+        "es": "Dirección IP o nombre de host"
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.50",
+        "fr": "ex. 192.168.1.50",
+        "de": "z. B. 192.168.1.50",
+        "es": "p. ej. 192.168.1.50"
+      },
+      "required": false
+    },
+    {
+      "key": "device_3_port",
+      "type": "number",
+      "label": {
+        "en": "TCP port",
+        "fr": "Port TCP",
+        "de": "TCP-Port",
+        "es": "Puerto TCP"
+      },
+      "required": false,
+      "default": 502,
+      "min": 1,
+      "max": 65535
+    },
+    {
+      "key": "device_3_unit_id",
+      "type": "number",
+      "label": {
+        "en": "Unit id (slave)",
+        "fr": "Identifiant d'esclave (unit id)",
+        "de": "Unit-ID (Slave)",
+        "es": "Identificador de esclavo (unit id)"
+      },
+      "required": false,
+      "default": 1,
+      "min": 0,
+      "max": 255
+    },
+    {
+      "key": "device_3_profile",
+      "type": "select",
+      "label": {
+        "en": "Profile",
+        "fr": "Profil",
+        "de": "Profil",
+        "es": "Perfil"
+      },
+      "required": false,
+      "default": "custom",
+      "options": [
+        {
+          "value": "custom",
+          "label": {
+            "en": "None: custom registers only",
+            "fr": "Aucun : registres personnalisés seulement",
+            "de": "Keins: nur eigene Register",
+            "es": "Ninguno: solo registros propios"
+          }
+        },
+        {
+          "value": "eastron_sdm630",
+          "label": {
+            "en": "Eastron SDM630 (three-phase meter)",
+            "fr": "Eastron SDM630 (compteur triphasé)",
+            "de": "Eastron SDM630 (Drehstromzähler)",
+            "es": "Eastron SDM630 (contador trifásico)"
+          }
+        },
+        {
+          "value": "eastron_sdm120",
+          "label": {
+            "en": "Eastron SDM120 (single-phase meter)",
+            "fr": "Eastron SDM120 (compteur monophasé)",
+            "de": "Eastron SDM120 (Wechselstromzähler)",
+            "es": "Eastron SDM120 (contador monofásico)"
+          }
+        },
+        {
+          "value": "sunspec",
+          "label": {
+            "en": "SunSpec inverter or meter",
+            "fr": "Onduleur ou compteur SunSpec",
+            "de": "SunSpec-Wechselrichter oder -Zähler",
+            "es": "Inversor o contador SunSpec"
+          }
+        },
+        {
+          "value": "huawei_sun2000",
+          "label": {
+            "en": "Huawei SUN2000 inverter",
+            "fr": "Onduleur Huawei SUN2000",
+            "de": "Huawei-SUN2000-Wechselrichter",
+            "es": "Inversor Huawei SUN2000"
+          }
+        },
+        {
+          "value": "victron_gx",
+          "label": {
+            "en": "Victron GX (system, unit id 100)",
+            "fr": "Victron GX (système, esclave 100)",
+            "de": "Victron GX (System, Unit-ID 100)",
+            "es": "Victron GX (sistema, esclavo 100)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_3_framing",
+      "type": "select",
+      "label": {
+        "en": "Framing",
+        "fr": "Trame",
+        "de": "Framing",
+        "es": "Trama"
+      },
+      "required": false,
+      "default": "tcp",
+      "options": [
+        {
+          "value": "tcp",
+          "label": {
+            "en": "Modbus TCP",
+            "fr": "Modbus TCP",
+            "de": "Modbus TCP",
+            "es": "Modbus TCP"
+          }
+        },
+        {
+          "value": "rtu_over_tcp",
+          "label": {
+            "en": "RTU over TCP (transparent gateway)",
+            "fr": "RTU sur TCP (passerelle transparente)",
+            "de": "RTU über TCP (transparentes Gateway)",
+            "es": "RTU sobre TCP (pasarela transparente)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_3_registers",
+      "type": "string",
+      "label": {
+        "en": "Custom registers",
+        "fr": "Registres personnalisés",
+        "de": "Eigene Register",
+        "es": "Registros propios"
+      },
+      "placeholder": {
+        "en": "Flow: holding 100 scale=0.1 temperature; Pump: coil 5 switch",
+        "fr": "Départ: holding 100 scale=0.1 temperature; Pompe: coil 5 switch",
+        "de": "Vorlauf: holding 100 scale=0.1 temperature; Pumpe: coil 5 switch",
+        "es": "Ida: holding 100 scale=0.1 temperature; Bomba: coil 5 switch"
+      },
+      "required": false
+    },
+    {
+      "key": "device_4",
+      "type": "section",
+      "label": {
+        "en": "Device 4",
+        "fr": "Appareil 4",
+        "de": "Gerät 4",
+        "es": "Dispositivo 4"
+      },
+      "description": {
+        "en": "Leave the address empty if you do not use this device.",
+        "fr": "Laissez l'adresse vide si vous n'utilisez pas cet appareil.",
+        "de": "Lass die Adresse leer, wenn du dieses Gerät nicht nutzt.",
+        "es": "Deje la dirección vacía si no usa este dispositivo."
+      }
+    },
+    {
+      "key": "device_4_host",
+      "type": "string",
+      "label": {
+        "en": "IP address or host name",
+        "fr": "Adresse IP ou nom d'hôte",
+        "de": "IP-Adresse oder Hostname",
+        "es": "Dirección IP o nombre de host"
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.50",
+        "fr": "ex. 192.168.1.50",
+        "de": "z. B. 192.168.1.50",
+        "es": "p. ej. 192.168.1.50"
+      },
+      "required": false
+    },
+    {
+      "key": "device_4_port",
+      "type": "number",
+      "label": {
+        "en": "TCP port",
+        "fr": "Port TCP",
+        "de": "TCP-Port",
+        "es": "Puerto TCP"
+      },
+      "required": false,
+      "default": 502,
+      "min": 1,
+      "max": 65535
+    },
+    {
+      "key": "device_4_unit_id",
+      "type": "number",
+      "label": {
+        "en": "Unit id (slave)",
+        "fr": "Identifiant d'esclave (unit id)",
+        "de": "Unit-ID (Slave)",
+        "es": "Identificador de esclavo (unit id)"
+      },
+      "required": false,
+      "default": 1,
+      "min": 0,
+      "max": 255
+    },
+    {
+      "key": "device_4_profile",
+      "type": "select",
+      "label": {
+        "en": "Profile",
+        "fr": "Profil",
+        "de": "Profil",
+        "es": "Perfil"
+      },
+      "required": false,
+      "default": "custom",
+      "options": [
+        {
+          "value": "custom",
+          "label": {
+            "en": "None: custom registers only",
+            "fr": "Aucun : registres personnalisés seulement",
+            "de": "Keins: nur eigene Register",
+            "es": "Ninguno: solo registros propios"
+          }
+        },
+        {
+          "value": "eastron_sdm630",
+          "label": {
+            "en": "Eastron SDM630 (three-phase meter)",
+            "fr": "Eastron SDM630 (compteur triphasé)",
+            "de": "Eastron SDM630 (Drehstromzähler)",
+            "es": "Eastron SDM630 (contador trifásico)"
+          }
+        },
+        {
+          "value": "eastron_sdm120",
+          "label": {
+            "en": "Eastron SDM120 (single-phase meter)",
+            "fr": "Eastron SDM120 (compteur monophasé)",
+            "de": "Eastron SDM120 (Wechselstromzähler)",
+            "es": "Eastron SDM120 (contador monofásico)"
+          }
+        },
+        {
+          "value": "sunspec",
+          "label": {
+            "en": "SunSpec inverter or meter",
+            "fr": "Onduleur ou compteur SunSpec",
+            "de": "SunSpec-Wechselrichter oder -Zähler",
+            "es": "Inversor o contador SunSpec"
+          }
+        },
+        {
+          "value": "huawei_sun2000",
+          "label": {
+            "en": "Huawei SUN2000 inverter",
+            "fr": "Onduleur Huawei SUN2000",
+            "de": "Huawei-SUN2000-Wechselrichter",
+            "es": "Inversor Huawei SUN2000"
+          }
+        },
+        {
+          "value": "victron_gx",
+          "label": {
+            "en": "Victron GX (system, unit id 100)",
+            "fr": "Victron GX (système, esclave 100)",
+            "de": "Victron GX (System, Unit-ID 100)",
+            "es": "Victron GX (sistema, esclavo 100)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_4_framing",
+      "type": "select",
+      "label": {
+        "en": "Framing",
+        "fr": "Trame",
+        "de": "Framing",
+        "es": "Trama"
+      },
+      "required": false,
+      "default": "tcp",
+      "options": [
+        {
+          "value": "tcp",
+          "label": {
+            "en": "Modbus TCP",
+            "fr": "Modbus TCP",
+            "de": "Modbus TCP",
+            "es": "Modbus TCP"
+          }
+        },
+        {
+          "value": "rtu_over_tcp",
+          "label": {
+            "en": "RTU over TCP (transparent gateway)",
+            "fr": "RTU sur TCP (passerelle transparente)",
+            "de": "RTU über TCP (transparentes Gateway)",
+            "es": "RTU sobre TCP (pasarela transparente)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "device_4_registers",
+      "type": "string",
+      "label": {
+        "en": "Custom registers",
+        "fr": "Registres personnalisés",
+        "de": "Eigene Register",
+        "es": "Registros propios"
+      },
+      "placeholder": {
+        "en": "Flow: holding 100 scale=0.1 temperature; Pump: coil 5 switch",
+        "fr": "Départ: holding 100 scale=0.1 temperature; Pompe: coil 5 switch",
+        "de": "Vorlauf: holding 100 scale=0.1 temperature; Pumpe: coil 5 switch",
+        "es": "Ida: holding 100 scale=0.1 temperature; Bomba: coil 5 switch"
+      },
+      "required": false
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
+      "key": "test_read",
+      "label": {
+        "en": "Test a read",
+        "fr": "Tester la lecture",
+        "de": "Lesen testen",
+        "es": "Probar una lectura"
+      },
+      "description": {
+        "en": "Reads registers of a saved device and shows the raw words and what they read as in each data type. Type sunspec to list the SunSpec models.",
+        "fr": "Lit des registres d'un appareil enregistré et montre les mots bruts et leur lecture dans chaque type de donnée. Saisissez sunspec pour lister les modèles SunSpec.",
+        "de": "Liest Register eines gespeicherten Geräts und zeigt die Rohwerte und ihre Lesart in jedem Datentyp. Gib sunspec ein, um die SunSpec-Modelle aufzulisten.",
+        "es": "Lee registros de un dispositivo guardado y muestra las palabras en bruto y su lectura en cada tipo de dato. Escriba sunspec para listar los modelos SunSpec."
+      },
+      "timeout_seconds": 60,
       "fields": [
         {
           "key": "device",
           "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": {
+            "en": "Device",
+            "fr": "Appareil",
+            "de": "Gerät",
+            "es": "Dispositivo"
+          },
+          "required": true,
+          "options": [
+            {
+              "value": "1",
+              "label": {
+                "en": "Device 1",
+                "fr": "Appareil 1",
+                "de": "Gerät 1",
+                "es": "Dispositivo 1"
+              }
+            },
+            {
+              "value": "2",
+              "label": {
+                "en": "Device 2",
+                "fr": "Appareil 2",
+                "de": "Gerät 2",
+                "es": "Dispositivo 2"
+              }
+            },
+            {
+              "value": "3",
+              "label": {
+                "en": "Device 3",
+                "fr": "Appareil 3",
+                "de": "Gerät 3",
+                "es": "Dispositivo 3"
+              }
+            },
+            {
+              "value": "4",
+              "label": {
+                "en": "Device 4",
+                "fr": "Appareil 4",
+                "de": "Gerät 4",
+                "es": "Dispositivo 4"
+              }
+            }
+          ]
+        },
+        {
+          "key": "register",
+          "type": "string",
+          "label": {
+            "en": "Register",
+            "fr": "Registre",
+            "de": "Register",
+            "es": "Registro"
+          },
+          "description": {
+            "en": "The syntax of the custom registers, without the name. count=10 reads more registers.",
+            "fr": "La syntaxe des registres personnalisés, sans le nom. count=10 lit plus de registres.",
+            "de": "Die Syntax der eigenen Register, ohne Namen. count=10 liest mehr Register.",
+            "es": "La sintaxis de los registros propios, sin el nombre. count=10 lee más registros."
+          },
+          "placeholder": {
+            "en": "e.g. holding 100 int16 scale=0.1",
+            "fr": "ex. holding 100 int16 scale=0.1",
+            "de": "z. B. holding 100 int16 scale=0.1",
+            "es": "p. ej. holding 100 int16 scale=0.1"
+          },
           "required": true
         }
       ]
+    },
+    {
+      "key": "check_config",
+      "label": {
+        "en": "Check the configuration",
+        "fr": "Vérifier la configuration",
+        "de": "Konfiguration prüfen",
+        "es": "Comprobar la configuración"
+      },
+      "description": {
+        "en": "Lists the mistakes entry by entry, and whether each device answers.",
+        "fr": "Liste les erreurs entrée par entrée, et si chaque appareil répond.",
+        "de": "Listet die Fehler Eintrag für Eintrag auf, und ob jedes Gerät antwortet.",
+        "es": "Lista los errores entrada por entrada, y si cada dispositivo responde."
+      },
+      "timeout_seconds": 15
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "device_unreachable",
+      "label": {
+        "en": "A Modbus device stops answering",
+        "fr": "Un appareil Modbus ne répond plus",
+        "de": "Ein Modbus-Gerät antwortet nicht mehr",
+        "es": "Un dispositivo Modbus deja de responder"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "Two reads in a row failed (gateway off, cable cut, inverter asleep at night).",
+        "fr": "Deux lectures de suite ont échoué (passerelle éteinte, câble coupé, onduleur endormi la nuit).",
+        "de": "Zwei Abfragen in Folge sind fehlgeschlagen (Gateway aus, Kabel getrennt, Wechselrichter nachts im Ruhemodus).",
+        "es": "Dos lecturas seguidas han fallado (pasarela apagada, cable cortado, inversor en reposo por la noche)."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
-        {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
+          "label": {
+            "en": "Device (empty: any)",
+            "fr": "Appareil (vide : n'importe lequel)",
+            "de": "Gerät (leer: beliebig)",
+            "es": "Dispositivo (vacío: cualquiera)"
+          }
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "device_name",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Device name",
+            "fr": "Nom de l'appareil",
+            "de": "Gerätename",
+            "es": "Nombre del dispositivo"
+          }
+        },
+        {
+          "key": "error",
+          "type": "string",
+          "label": {
+            "en": "Error",
+            "fr": "Erreur",
+            "de": "Fehler",
+            "es": "Error"
+          }
         }
       ]
-    }
-  ],
-  "scene_actions": [
+    },
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "device_reachable",
+      "label": {
+        "en": "A Modbus device answers again",
+        "fr": "Un appareil Modbus répond de nouveau",
+        "de": "Ein Modbus-Gerät antwortet wieder",
+        "es": "Un dispositivo Modbus vuelve a responder"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "A device that had stopped answering is read again.",
+        "fr": "Un appareil qui ne répondait plus est de nouveau lu.",
+        "de": "Ein Gerät, das nicht mehr antwortete, wird wieder gelesen.",
+        "es": "Un dispositivo que había dejado de responder vuelve a leerse."
+      },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "label": {
+            "en": "Device (empty: any)",
+            "fr": "Appareil (vide : n'importe lequel)",
+            "de": "Gerät (leer: beliebig)",
+            "es": "Dispositivo (vacío: cualquiera)"
+          }
         }
       ],
-      "outputs": [
+      "variables": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "device_name",
+          "type": "string",
+          "label": {
+            "en": "Device name",
+            "fr": "Nom de l'appareil",
+            "de": "Gerätename",
+            "es": "Nombre del dispositivo"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
+      "key": "device_overview",
+      "label": {
+        "en": "Modbus device",
+        "fr": "Appareil Modbus",
+        "de": "Modbus-Gerät",
+        "es": "Dispositivo Modbus"
+      },
       "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+        "en": "The main values of a device and the health of its link.",
+        "fr": "Les valeurs principales d'un appareil et l'état de sa liaison.",
+        "de": "Die wichtigsten Werte eines Geräts und der Zustand seiner Verbindung.",
+        "es": "Los valores principales de un dispositivo y el estado de su enlace."
       },
       "icon": "activity",
-      "action_timeout_seconds": 15
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": true,
+          "label": {
+            "en": "Device",
+            "fr": "Appareil",
+            "de": "Gerät",
+            "es": "Dispositivo"
+          }
+        }
+      ]
     }
   ]
 }
