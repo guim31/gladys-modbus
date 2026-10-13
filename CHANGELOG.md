@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-13
+
 ### Added
 
 - Up to four Modbus TCP devices, each one a Gladys device, directly or behind a
@@ -33,4 +35,5 @@ the notes of the version's GitHub Release.
   device stops answering_ and _A Modbus device answers again_.
 - English, French, German and Spanish everywhere, documentation included.
 
-[Unreleased]: https://github.com/guim31/gladys-modbus/commits/main
+[Unreleased]: https://github.com/guim31/gladys-modbus/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-modbus/releases/tag/v1.0.1

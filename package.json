@@ -1,6 +1,6 @@
 {
   "name": "gladys-modbus",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Gladys Assistant integration for Modbus TCP devices: energy meters, inverters, heat pumps, PLCs.",
   "type": "module",

@@ -8,8 +8,8 @@
     "de": "Modbus-TCP-Register lesen und schreiben: Zähler, Wechselrichter, Wärmepumpen, SPS.",
     "es": "Leer y escribir registros Modbus TCP: contadores, inversores, bombas de calor, PLC."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/guim31/gladys-modbus:1.0.0",
+  "version": "1.0.1",
+  "docker_image": "ghcr.io/guim31/gladys-modbus:1.0.1",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/guim31/gladys-modbus/main/cover.png",
   "categories": ["protocols", "energy"],
