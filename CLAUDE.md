@@ -5,23 +5,26 @@ contributors.
 
 ## What this is
 
-A Gladys Assistant **external integration**: a Node.js service (Node 22+, ESM,
-no build step) that runs in its own sandboxed Docker container and talks to
-Gladys through
+A Gladys Assistant **external integration** for **Modbus TCP** devices
+(meters, inverters, heat pumps, PLCs): a Node.js service (Node 22+, ESM, no
+build step) that runs in its own sandboxed Docker container and talks to Gladys
+through
 [`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js),
-its only runtime dependency. It started from the official JavaScript template.
+its only runtime dependency (the Modbus client is in `src/modbus/`). It started
+from the official JavaScript template.
 
 ## Commands
 
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/profiles.test.js         # one file
+node --test --test-name-pattern "SunSpec" # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
 npx github:GladysAssistant/integration-store .   # store admission checks
+node scripts/probe.mjs --host <ip> --profile sunspec   # read-only, a real device
 ```
 
 The CI (`.github/workflows/ci.yml`) runs `format:check`, `lint` and `test` on
@@ -31,16 +34,25 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
-src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+index.js                          SDK wiring only (src/app.js registers every handler)
+src/app.js                        handlers: connected, config, scan, setValue, actions, widget
+src/hub.js                        the configured devices: probe, publish, read, status, writes, triggers
+src/poller.js                     the container's own polling timer (core onPoll = fallback)
+src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults), the four device slots
+src/registers.js                  the custom registers syntax (parser, values)
+src/kinds.js                      kinds of value -> Gladys category/type/unit
+src/profiles/                     eastron.js, sunspec.js, huawei.js, victron.js (+ common.js, index.js)
+src/modbus/                       frames (TCP/RTU, CRC), datatypes (swap), connection (queue), reader (grouping)
+src/actions.js                    "Test a read" and "Check the configuration"
+src/widgets.js                    the "Modbus device" widget
+src/messages.js, src/names.js     every text, in en/fr/de/es
+src/store.js                      /data/modbus-layouts.json (what the probes found)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)
+test/helpers/fakeModbus.js        a fake Modbus TCP / RTU-over-TCP server, written independently
+test/fixtures/devices.js          register maps after the manufacturers' tables
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+scripts/probe.mjs                 read-only probe of a real device
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +82,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German ("du") and Spanish
+  ("usted"): action messages, statuses, feature names, widget texts, manifest
+  texts, and `docs/en.md`, `fr.md`, `de.md`, `es.md` with the same sections.
+  `test/i18n.test.js` checks it.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +247,58 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Modbus TCP : propre à cette intégration
+
+**Conception (13/10/2026)**
+
+- **Client Modbus maison** (`src/modbus/`), sans dépendance : `modbus-serial` tire le module natif
+  `serialport` (inutile sans port série, lourd sous arm64), `jsmodbus` 5.0 se dit « early beta ». Le
+  faux serveur des tests (`test/helpers/fakeModbus.js`) est écrit indépendamment des trames du client,
+  et jsmodbus sert de serveur tiers dans un test d'interopérabilité (devDependency seulement).
+- **Une connexion par passerelle** (hôte, port, trame), **une requête à la fois** dessus : RS-485 est
+  half-duplex, et Huawei gère mal les requêtes concurrentes. Reconnexion avec attente 1 s → 60 s ; en
+  RTU sur TCP (pas d'identifiant de transaction), la requête qui suit un délai dépassé attend 250 ms et
+  jette ce qui est arrivé entre-temps.
+- **Lectures groupées**, fractionnées point par point (et mémorisé) quand l'appareil refuse une plage
+  (exception 2) : beaucoup d'appareils refusent une lecture qui couvre une adresse non implémentée.
+- **Identité d'un appareil = son adresse Modbus** (`hôte-port-esclave`) : un compteur Eastron n'a pas de
+  numéro de série lisible. La doc demande une IP fixe. Les clés de fonctionnalités des registres
+  personnalisés viennent de la table et de l'adresse (`c_h100`, `c_i30775_b3`), celles des profils sont
+  préfixées par profil (`sdm_`, `sunspec_inverter1_`, `huawei_`, `victron_`).
+- **Formulaire plat** : quatre emplacements d'appareil (`device_<n>_*`). Le champ `string` du cœur est
+  un `<input>` **d'une seule ligne** : les registres personnalisés sont séparés par des points-virgules.
+- **Écriture** : `switch` → `input/binary` (interrupteur au tableau de bord, **hors assistants
+  vocaux** : Alexa, Google et HomeKit exposent `switch` et `thermostat`) ; `setpoint` →
+  `water-heater/target-temperature` (commande de consigne, hors moyenne de température de la pièce et
+  hors assistants), températures seulement, `min`/`max` obligatoires et appliqués en écriture.
+- Ce que trouve la sonde (modèles SunSpec, compteur et batterie Huawei, batterie Victron) est gardé dans
+  `/data` : un onduleur endormi au redémarrage reste publié.
+- Un appareil est « perdu » après **deux** lectures ratées de suite (tout de suite s'il n'a jamais
+  répondu) : une ligne d'avertissement, un déclencheur `device_unreachable`, le statut de connexion.
+- Budget du cœur (300 états/min) : l'intervalle effectif est rallongé si `fonctionnalités × 60 / 240`
+  le dépasse, avec un avertissement unique.
+
+**Pièges découverts**
+
+- **`read_only` n'entre pas dans la signature `structure_changed`** du cœur (5.2.1 :
+  `featureSignature` = external_id, category, type, unit, min, max, step). Basculer une fonctionnalité de
+  lecture seule à pilotable ne propose **pas** « Mettre à jour » dans Découverte. D'où : les `switch` et
+  `setpoint` déclarés sont publiés pilotables, et c'est `onSetValue` qui refuse tant que « Autoriser
+  l'écriture » est désactivé.
+- Une erreur levée dans une action n'a qu'**un texte** (pas d'objet multilingue) : écrite dans la langue
+  de la configuration. Elle s'affiche en rouge (`alert-danger`) ; un message de statut de connexion
+  s'affiche en jaune (`alert-warning`) sous une pastille rouge « Déconnecté ».
+- Le contrôle « Sie »/« Ihr » de `test/i18n.test.js` attrape aussi le « sie/Sie » de la 3ᵉ personne du
+  pluriel en début de phrase : reformuler (« Die Geräte… »).
+- SunSpec : une valeur non implémentée vaut 0x8000 (int16, sunssf), 0xFFFF (uint16, enum16), 0 (acc32),
+  NaN (float32) : ne rien publier plutôt qu'un faux 0. Le modèle 213 fait 124 registres + 2 : il ne tient
+  pas dans une lecture de 125, d'où `maxRegisters: 100`.
+- Huawei : 1 s de pause après la connexion, un seul client Modbus TCP à la fois, exception 6 (occupé)
+  au démarrage (une nouvelle tentative après 500 ms). Puissance du compteur positive à l'**export** :
+  inversée pour `grid-sensor/power` (import +). Index d'export négatif sur certains firmwares : valeur
+  absolue.
+
+**Non vérifié faute de matériel** : tout appareil réel. À éprouver en priorité avec `scripts/probe.mjs` :
+le signe de la puissance d'un compteur SunSpec (dépend du fabricant), la détection du compteur Huawei
+(37100), les registres Victron sans batterie, l'esclave SunSpec des SMA (126).
